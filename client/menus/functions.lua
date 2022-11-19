@@ -7,7 +7,14 @@ function Menu.OpenStoreMenu()
 
     local list = Config.Items
 
+    local default_coords = GetEntityCoords(PlayerPedId())
     while main do
+        local next_coords = GetEntityCoords(PlayerPedId())
+        local dist = #(default_coords - next_coords)
+        if dist > 2.0 then
+            RageUI.CloseAll()
+        end
+
         RageUI.IsVisible(main, function()
             for i,v in ipairs(list.items) do
                 RageUI.Button(list.items[i].name, nil, {RightLabel = '~g~'..tostring(list.items[i].price)..'$~s~ →'}, true, {
@@ -20,8 +27,8 @@ function Menu.OpenStoreMenu()
 
         if not RageUI.Visible(main) then
             main = RMenu:DeleteType('main')
-            
         end
+
         Wait(1)
     end
 end
@@ -63,7 +70,13 @@ function Menu.OpenCraftMenu()
 
     RageUI.Visible(main, true)
 
+    local default_coords = GetEntityCoords(PlayerPedId())
     while main do
+        local next_coords = GetEntityCoords(PlayerPedId())
+        local dist = #(default_coords - next_coords)
+        if dist > 2.0 then
+            RageUI.CloseAll()
+        end
         RageUI.IsVisible(main, function()
             for k,v in pairs(main_list) do
                 RageUI.Button(v.label, nil, {RightLabel = "→"}, true, {}, v.menu)
@@ -77,6 +90,7 @@ function Menu.OpenCraftMenu()
                         if k3 ~= "amount" then
                             RageUI.Button(k3, nil, {RightLabel = "Craft →"}, true, {
                                 onSelected = function()
+                                    print(json.encode(v2))
                                     TriggerServerEvent('jim-mining:MakeItem', v2) -- REMAKE ACTION OF MAKEITEM AND ADAPT ARGUMENTS TO SEND LESS ARGS AS POSSIBLE
                                 end
                             })
@@ -103,7 +117,13 @@ function Menu.OpenSellOreMenu()
 
     local list = {"goldingot", "silveringot", "copperore", "ironore", "goldore", "silverore", "carbon"}
 
+    local default_coords = GetEntityCoords(PlayerPedId())
     while main do
+        local next_coords = GetEntityCoords(PlayerPedId())
+        local dist = #(default_coords - next_coords)
+        if dist > 2.0 then
+            RageUI.CloseAll()
+        end
         RageUI.IsVisible(main, function()
             for i = 1, #list do
                 RageUI.Button(list[i], nil, {RightLabel = '~g~'..Config.SellItems[list[i]]..'$ →'}, true, {
@@ -126,16 +146,24 @@ function Menu.OpenSellJewelMenu()
 
     RageUI.Visible(main, true)
 
-    local list = {"emerald", "ruby", "diamond", "sapphire", "rings", "necklaces", "earrings"} 
+    local list = {"emerald", "ruby", "diamond", "sapphire", "rings", "necklaces", "earrings"}  -- CREATE WHITELIST OF ITEMS THAT CAN BE SELLED AND DO AN ITERATION ON THE PLAYER INVENTORY (WATCH SHOWCASE https://streamable.com/t2jfzc)
 
-    while main do 
+    local default_coords = GetEntityCoords(PlayerPedId())
+    while main do
+        local next_coords = GetEntityCoords(PlayerPedId())
+        local dist = #(default_coords - next_coords)
+        if dist > 2.0 then
+            RageUI.CloseAll()
+        end
         RageUI.IsVisible(main, function()
-            for i = 1, #list do
-                RageUI.Button(list[i], nil, {RightLabel = '~g~'..Config.SellItems[list[i]]..'$ →'}, true, {
-                    onSelected = function()
-                        TriggerServerEvent('jim-mining:JewelSell:Sub', list[i]) -- CHECK ALL OF THAT IF ITS GOOD
-                    end
-                })
+            for k,v in pairs(list) do
+                if Config.SellItems[v] then
+                    RageUI.Button(v, nil, {RightLabel = '~g~'..Config.SellItems[v]..'$~s~ →'}, true, {
+                        onSelected = function()
+                            TriggerServerEvent('jim-mining:JewelSell:Sub', v) -- CHECK ALL OF THAT IF ITS GOOD
+                        end
+                    })
+                end
             end
         end, function() end)
 
@@ -192,7 +220,13 @@ function Menu.OpenSellVangelicoMenu()
 
     RageUI.Visible(main, true)
 
-    while main do 
+    local default_coords = GetEntityCoords(PlayerPedId())
+    while main do
+        local next_coords = GetEntityCoords(PlayerPedId())
+        local dist = #(default_coords - next_coords)
+        if dist > 2.0 then
+            RageUI.CloseAll()
+        end
         RageUI.IsVisible(main, function()
             for k,v in pairs(main_list) do
                 RageUI.Button(k, nil, {RightLabel = "→"}, true, {}, v.menu)

@@ -1,7 +1,50 @@
 ESX = nil
 TriggerEvent('esx:getSharedObject', function(obj) ESX = obj end)
 
+DefaultProps = {
+	{data = {coords = vector4(-593.29, 2093.22, 131.7, 110.0), prop = `prop_worklight_02a`}, freeze = true, sync = false},-- Mineshaft door
+	{data = {coords = vector4(-604.55, 2089.74, 131.15, 300.0), prop = `prop_worklight_02a`}, freeze = true, sync = false}, -- Mineshaft door 2
+	{data = {coords = vector4(2991.59, 2758.07, 42.68, 250.85), prop = `prop_worklight_02a`}, freeze = true, sync = false},  -- Quarry Light
+	{data = {coords = vector4(2991.11, 2758.02, 42.66, 194.6), prop = `prop_worklight_02a`}, freeze = true, sync = false},  -- Quarry Light
+	{data = {coords = vector4(2971.78, 2743.33, 43.29, 258.54), prop = `prop_worklight_02a`}, freeze = true, sync = false},  -- Quarry Light
+	{data = {coords = vector4(3000.72, 2777.08, 43.08, 211.7), prop = `prop_worklight_02a`}, freeze = true, sync = false}, -- Quarry Light
+	{data = {coords = vector4(2998.0, 2767.45, 42.71, 249.22), prop = `prop_worklight_02a`}, freeze = true, sync = false},  -- Quarry Light
+	{data = {coords = vector4(2959.93, 2755.26, 43.71, 164.24), prop = `prop_worklight_02a`}, freeze = true, sync = false},  -- Quarry Light
+	{data = {coords = vector4(1106.46, -1991.44, 31.49, 185.78), prop = `prop_worklight_02a`}, freeze = true, sync = false} -- Foundary Light
+}
+ActionByType = {
+	["Smelter"] = Menu.OpenCraftMenu,
+	["MineStore"] = Menu.OpenStoreMenu,
+	["OreBuyer"] = Menu.OpenSellOreMenu,
+	["JewelBuyer"] = Menu.OpenSellJewelMenu,
+	["JewelCut"] = Menu.OpenCraftMenu,
+	["Cracking"] = function() return end, -- CREATE STONE CRACK FUNCTION. Ref: stone_crack
+}
+InteractionsByPropModel = {
+	[tostring(GetHashKey('gr_prop_gr_speeddrill_01c'))] = {
+		help_text = "Press ~INPUT_CONTEXT~ to use jewel cutter",
+		interaction_radius = 1.0,
+		action = ActionByType["JewelCut"]
+	},
+	[tostring(GetHashKey('prop_vertdrill_01'))] = {
+		help_text = "Press ~INPUT_CONTEXT~ to use stone cracker",
+		interaction_radius = 1.0,
+		action = ActionByType["Cracking"] -- WHEN STONE CRACKING FUNCTION WILL BE CREATED, UPDATE THIS. Ref: stone_crack
+	}, 
+	[tostring(GetHashKey('cs_x_rubweec'))] = {
+		help_text = "Press ~INPUT_CONTEXT~ to mine",
+		interaction_radius = 2.0,
+		action = StoneBreak
+	},
+	[tostring(GetHashKey('prop_rock_5_a'))] = {
+		help_text = "Press ~INPUT_CONTEXT~ to mine",
+		interaction_radius = 2.0,
+		action = StoneBreak
+	},
+}
+soundId = GetSoundId()
 PlayerData = {}
+Positions = {}
 
 Citizen.CreateThread(function()
     while not NetworkIsPlayerActive(PlayerId()) do Wait(20) end
@@ -9,13 +52,6 @@ Citizen.CreateThread(function()
     while not PlayerData.job do Wait(20) end
 	InitProps()
 end)
-
-local Props = {}
-local Targets = {}
-local Peds = {}
-local Blip = {}
-local soundId = GetSoundId()
-
 ------------------------------------------------------------
 
 --Hide the mineshaft doors
@@ -30,86 +66,7 @@ end
 
 function makeJob()
 	removeJob()
-	if not Config.K4MB1Only then
-		-- if Config.propSpawn then
-		-- 	--Quickly add outside lighting
-			
-		-- 	if Config.HangingLights then
-		-- 		for k, v in pairs(Config.MineLights) do
-		-- 			if Config.propSpawn then Props[#Props+1] = makeProp({coords = v, prop = `xs_prop_arena_lights_ceiling_l_c`}, 1, false) end
-		-- 		end
-		-- 	end
-		-- 	if not Config.HangingLights then
-		-- 		for k, v in pairs(Config.WorkLights) do
-		-- 			if Config.propSpawn then Props[#Props+1] = makeProp({coords = v, prop = `prop_worklight_03a`}, 1, false) end
-		-- 		end
-		-- 	end
-		-- end
-		-- for k, v in pairs(Config.Locations["MineStore"]) do
-		-- 	if Config.Blips and v.blipTrue then Blip[#Blip+1] = makeBlip(v) end
-		-- 	Peds[#Peds+1] = makePed(v.model, v.coords, 1, 1, v.scenario)
-		-- 	Targets["Mine"..k] =
-		-- 	exports['qb-target']:AddCircleZone("Mine"..k, v.coords.xyz, 1.0, { name="Mine"..k, debugPoly=Config.Debug, useZ=true, },
-		-- 	{ options = { { event = "jim-mining:openShop", icon = "fas fa-store", label = Loc[Config.Lan].info["browse_store"], job = Config.Job }, },
-		-- 		distance = 2.0 })
-		-- end
-		--Smelter to turn stone into ore
-		-- for k, v in pairs(Config.Locations["Smelter"]) do
-		-- 	if Config.Blips and v.blipTrue then Blip[#Blip+1] = makeBlip(v) end
-		-- 	Targets["Smelter"..k] =
-		-- 	exports['qb-target']:AddCircleZone("Smelter"..k, v.coords.xyz, 3.0, { name="Smelter"..k, debugPoly=Config.Debug, useZ=true, },
-		-- 		{ options = { { event = "jim-mining:CraftMenu", icon = "fas fa-fire-burner", label = Loc[Config.Lan].info["use_smelter"], craftable = Crafting.SmeltMenu, job = Config.Job }, },
-		-- 			distance = 10.0
-		-- 		})
-		-- end
-		--Ore Buying Ped
-		-- for k, v in pairs(Config.Locations["OreBuyer"]) do
-		-- 	Peds[#Peds+1] = makePed(v.model, v.coords, 1, 1, v.scenario)
-		-- 	if Config.Blips and v.blipTrue then Blip[#Blip+1] = makeBlip(v) end
-		-- 	local name = "OreBuyer"..k
-		-- 	Targets[name] =
-		-- 		exports['qb-target']:AddCircleZone(name, v.coords.xyz, 0.9, { name=name, debugPoly=Config.Debug, useZ=true, },
-		-- 		{ options = { { event = "jim-mining:SellOre", icon = "fas fa-sack-dollar", label = Loc[Config.Lan].info["sell_ores"], ped = Peds[#Peds], job = Config.Job }, },
-		-- 			distance = 2.0
-		-- 		})
-		-- end
-
-		--Jewel Cutting Bench
-		for k, v in pairs(Config.Locations["JewelCut"]) do
-			if Config.Blips and v.blipTrue then Blip[#Blip+1] = makeBlip(v) end
-			Props[#Props+1] = makeProp(v, 1, false)
-			Targets["JewelCut"..k] =
-			exports['qb-target']:AddCircleZone("JewelCut"..k, v.coords.xyz, 2.0,{ name="JewelCut"..k, debugPoly=Config.Debug, useZ=true, },
-			{ options = { { event = "jim-mining:JewelCut", icon = "fas fa-gem", label = Loc[Config.Lan].info["jewelcut"], bench = Props[#Props], job = Config.Job }, },
-				distance = 2.0
-			})
-		end
-		--Cracking Bench
-		for k, v in pairs(Config.Locations["Cracking"]) do
-			Props[#Props+1] = makeProp(v, 1, false)
-			if Config.Blips and v.blipTrue then Blip[#Blip+1] = makeBlip(v) end
-			Targets["Cracking"..k] =
-				exports['qb-target']:AddCircleZone("Cracking"..k, v.coords.xyz, 1.2, {name="Cracking"..k, debugPoly=Config.Debug, useZ=true, },
-				{ options = { { event = "jim-mining:CrackStart", icon = "fas fa-compact-disc", item = "stone", label = Loc[Config.Lan].info["crackingbench"], bench = Props[#Props] }, },
-					distance = 2.0
-				})
-		end
-		--Stone Washing
-		--Ore Spawning
-		for k, v in pairs(Config.OrePositions) do
-			Props[#Props+1] = makeProp({coords = v, prop = `cs_x_rubweec`}, 1, false)
-			Targets["Ore"..k] =
-				exports['qb-target']:AddCircleZone("Ore"..k, vector3(v.x, v.y, v.z-1.03), 1.2, { name="Ore"..k, debugPoly=Config.Debug, useZ=true, },
-				{ options = {
-					{ event = "jim-mining:MineOre:Pick", icon = "fas fa-hammer", item = "pickaxe", label = Loc[Config.Lan].info["mine_ore"].." ("..QBCore.Shared.Items["pickaxe"].label..")", job = Config.Job, name = "Ore"..k, stone = Props[#Props] },
-					{ event = "jim-mining:MineOre:Drill", icon = "fas fa-screwdriver", item = "miningdrill", label = Loc[Config.Lan].info["mine_ore"].." ("..QBCore.Shared.Items["miningdrill"].label..")", job = Config.Job, name = "Ore"..k, stone = Props[#Props] },
-					{ event = "jim-mining:MineOre:Laser", icon = "fas fa-screwdriver-wrench", item = "mininglaser", label = Loc[Config.Lan].info["mine_ore"].." ("..QBCore.Shared.Items["mininglaser"].label..")", job = Config.Job, name = "Ore"..k, stone = Props[#Props] },
-				}, distance = 1.3 })
-			Props[#Props+1] = makeProp({coords = vector4(v.x, v.y, v.z+0.25, v[4]), prop = `prop_rock_5_a`}, 1, false)
-		end
-	else 
-		Config.K4MB1 = true 
-	end
+	
 
 	if Config.K4MB1 then
 		for k, v in pairs(K4MB1["MineStore"]) do
@@ -532,7 +489,7 @@ RegisterNetEvent('jim-mining:PanStart', function(data)
 			TaskGoStraightToCoord(PlayerPedId(), trayCoords, 4.0, 100, GetEntityHeading(PlayerPedId()), 0)
 			destroyProp(Props[#Props])
 			unloadPtfxDict("core")
-			LocalPlayer.state:set("inv_busy", false, true) TriggerEvent('inventory:client:busy:status', false) TriggerEvent('canUseInventoryAndHotbar:toggle', true)
+			-- LocalPlayer.state:set("inv_busy", false, true) TriggerEvent('inventory:client:busy:status', false) TriggerEvent('canUseInventoryAndHotbar:toggle', true)
 			Panning = false
 		end, "goldpan")
 	end

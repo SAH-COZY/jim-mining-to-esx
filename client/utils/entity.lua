@@ -34,11 +34,10 @@ end
 
 function Entity.Prop.Create(data, freeze, synced)
     Model.Load(data.prop)
-    -- data.coords = vector3(data.coords.x, data.coords.y, data.coords.z-1.03)
     local entity_handle = CreateObject(data.prop, data.coords.x, data.coords.y, data.coords.z-1.03, synced or false, synced or false, 0)
     SetEntityHeading(entity_handle, data.coords.w+180.0)
     FreezeEntityPosition(entity_handle, freeze or 0)
-    table.insert(Entity.Prop.List, entity_handle)
+    Entity.Prop.List[entity_handle] = true
     return entity_handle
 end
 
@@ -53,6 +52,7 @@ function Entity.Prop.Delete(entity_handle)
 end
 
 function Entity.Ped.Create(model, coords, freeze, collision, scenario, anim, action)
+    print('Ped load model: '..model)
     Model.Load(model)
     local ped = CreatePed(0, model, coords.x, coords.y, coords.z-1.03, coords.w, false, false)
     SetEntityInvincible(ped, true)

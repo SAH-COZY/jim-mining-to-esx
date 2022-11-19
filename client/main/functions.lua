@@ -1,22 +1,3 @@
-local DefaultProps = {
-	{data = {coords = vector4(-593.29, 2093.22, 131.7, 110.0), prop = `prop_worklight_02a`}, freeze = true, sync = false},-- Mineshaft door
-	{data = {coords = vector4(-604.55, 2089.74, 131.15, 300.0), prop = `prop_worklight_02a`}, freeze = true, sync = false}, -- Mineshaft door 2
-	{data = {coords = vector4(2991.59, 2758.07, 42.68, 250.85), prop = `prop_worklight_02a`}, freeze = true, sync = false},  -- Quarry Light
-	{data = {coords = vector4(2991.11, 2758.02, 42.66, 194.6), prop = `prop_worklight_02a`}, freeze = true, sync = false},  -- Quarry Light
-	{data = {coords = vector4(2971.78, 2743.33, 43.29, 258.54), prop = `prop_worklight_02a`}, freeze = true, sync = false},  -- Quarry Light
-	{data = {coords = vector4(3000.72, 2777.08, 43.08, 211.7), prop = `prop_worklight_02a`}, freeze = true, sync = false}, -- Quarry Light
-	{data = {coords = vector4(2998.0, 2767.45, 42.71, 249.22), prop = `prop_worklight_02a`}, freeze = true, sync = false},  -- Quarry Light
-	{data = {coords = vector4(2959.93, 2755.26, 43.71, 164.24), prop = `prop_worklight_02a`}, freeze = true, sync = false},  -- Quarry Light
-	{data = {coords = vector4(1106.46, -1991.44, 31.49, 185.78), prop = `prop_worklight_02a`}, freeze = true, sync = false} -- Foundary Light
-}
-local ActionByType = {
-	["Smelter"] = Menu.OpenCraftMenu,
-	["MineStore"] = Menu.OpenStoreMenu,
-	["OreBuyer"] = Menu.OpenSellOreMenu,
-	["JewelBuyer"] = Menu.OpenSellJewelMenu
-}
-local Positions = {}
-
 function InitProps()
 	for i,v in ipairs(DefaultProps) do
 		Entity.Prop.Create(v.data, v.freeze, v.sync)
@@ -35,8 +16,8 @@ function RemoveJobSpecs()
 		DeleteObject(Entity.Prop.List[i]) 
 	end
 	Entity.Prop.List = {}
-	for i = 1, #Blip.List do 
-		RemoveBlip(Blip.List[i])
+	for k,_ in pairs(Blip.List) do 
+		Blip.Remove(k)
 	end
 	Blip.List = {}
 	Positions = {}
@@ -44,64 +25,124 @@ end
 
 function InitJobSpecs()
 	RemoveJobSpecs()
-	if not Config.K4MB1Only then
-
-		if Config.propSpawn then
-			if Config.HangingLights then
-				for k, v in pairs(Config.MineLights) do
-					if Config.propSpawn then Entity.Prop.List[#Props+1] = Entity.Prop.Create({coords = v, prop = `xs_prop_arena_lights_ceiling_l_c`}, 1, false) end
+	if PlayerData.job.name == 'miner' then
+		if not Config.K4MB1Only then
+			if Config.propSpawn then
+				if Config.HangingLights then
+					for k, v in pairs(Config.MineLights) do
+						if Config.propSpawn then Entity.Prop.List[#Props+1] = Entity.Prop.Create({coords = v, prop = `xs_prop_arena_lights_ceiling_l_c`}, 1, false) end
+					end
+				end
+				if not Config.HangingLights then
+					for k, v in pairs(Config.WorkLights) do
+						if Config.propSpawn then Entity.Prop.List[#Props+1] = Entity.Prop.Create({coords = v, prop = `prop_worklight_03a`}, 1, false) end
+					end
 				end
 			end
-			if not Config.HangingLights then
-				for k, v in pairs(Config.WorkLights) do
-					if Config.propSpawn then Entity.Prop.List[#Props+1] = Entity.Prop.Create({coords = v, prop = `prop_worklight_03a`}, 1, false) end
+			for k,v in pairs(Config.Locations) do
+				for i,v2 in ipairs(v) do
+					if v2.prop then -- PROP
+						Entity.Prop.Create(v2, true, false)
+					end
+					if v2.model then -- PED
+						Entity.Ped.Create(v2.model, v2.coords, true, true, v2.scenario, nil, ActionByType[k]) -- ADAPT ACTION TO PED
+					end
+					if v2.blipTrue then -- BLIP
+						Blip.Create(v2)
+					end
+					if not v2.model and not v2.prop then -- IF NOT A PROP AND NOT A PED
+						if not Positions[k] then Positions[k] = {} end
+						table.insert(Positions[k], {
+							coords = v2.coords,
+							action = ActionByType[k]
+						})
+					end
 				end
 			end
-		end
-
-		for k,v in pairs(Config.Locations) do
-			for i,v2 in ipairs(v) do
-				if v2.prop then -- PROP
-					Entity.Prop.Create(v, true, false)
-				end
-				if v2.model then -- PED
-					Entity.Ped.Create(v.model, v.coords, true, true, v.scenario, nil, ActionByType[k]) -- ADAPT ACTION TO PED
-				end
-				if v2.blipTrue then
-					Blip.Create(v)
-				end
-				if not v2.model and not v2.prop then
-					table.insert(Positions[k], {
-						coords = v2.coords,
-						action = PosActions[k]
-					})
-				end
+			for k, v in pairs(Config.OrePositions) do
+				local prop_rock_1 = Entity.Prop.Create({coords = v, prop = `cs_x_rubweec`}, true, false)
+				local prop_rock_2 = Entity.Prop.Create({coords = vector4(v.x, v.y, v.z+0.25, v[4]), prop = `prop_rock_5_a`}, 1, false)
 			end
+		else 
+			Config.K4MB1 = true 
 		end
 
-		--Ore Spawning
-		for k, v in pairs(Config.OrePositions) do
-			Props[#Props+1] = makeProp({coords = v, prop = `cs_x_rubweec`}, 1, false)
-			Targets["Ore"..k] =
-				exports['qb-target']:AddCircleZone("Ore"..k, vector3(v.x, v.y, v.z-1.03), 1.2, { name="Ore"..k, debugPoly=Config.Debug, useZ=true, },
-				{ options = {
-					{ event = "jim-mining:MineOre:Pick", icon = "fas fa-hammer", item = "pickaxe", label = Loc[Config.Lan].info["mine_ore"].." ("..QBCore.Shared.Items["pickaxe"].label..")", job = Config.Job, name = "Ore"..k, stone = Props[#Props] },
-					{ event = "jim-mining:MineOre:Drill", icon = "fas fa-screwdriver", item = "miningdrill", label = Loc[Config.Lan].info["mine_ore"].." ("..QBCore.Shared.Items["miningdrill"].label..")", job = Config.Job, name = "Ore"..k, stone = Props[#Props] },
-					{ event = "jim-mining:MineOre:Laser", icon = "fas fa-screwdriver-wrench", item = "mininglaser", label = Loc[Config.Lan].info["mine_ore"].." ("..QBCore.Shared.Items["mininglaser"].label..")", job = Config.Job, name = "Ore"..k, stone = Props[#Props] },
-				}, distance = 1.3 })
-			Props[#Props+1] = makeProp({coords = vector4(v.x, v.y, v.z+0.25, v[4]), prop = `prop_rock_5_a`}, 1, false)
-		end
-	else 
-		Config.K4MB1 = true 
+		InitDetection()
 	end
+end
 
-	
+function InitDetection()
+	Citizen.CreateThread(function()
+		while true do
+			if PlayerData.job.name ~= 'miner' then
+				break
+			end
+			local interval = 400
+			local objects, peds = GetGamePool("CObject"), GetGamePool('CPed')
+			for i,v in ipairs(objects) do
+				local player_coords = GetEntityCoords(PlayerPedId())
+				local obj_coords = GetEntityCoords(v)
+				local dist = #(player_coords - obj_coords)
+				if dist <= 10.0 then
+					if Entity.Prop.List[v] then
+						interval = 1
+						if dist <= 2.0 then
+							local curr_prop_data = InteractionsByPropModel[tostring(GetEntityModel(v))]
+							ESX.ShowHelpNotification(curr_prop_data.help_text)
+							if IsControlJustPressed(0, 51) then
+								curr_prop_data.action(v)
+							end
+						end
+					end
+				end
+			end
+			for i,v in ipairs(peds) do
+				local player_coords = GetEntityCoords(PlayerPedId())
+				local ped_coords = GetEntityCoords(v)
+				local dist = #(player_coords - ped_coords)
+				if dist <= 10.0 then
+					if Entity.Ped.List[v] then
+						interval = 1
+						if dist <= 1.3 then
+							if Entity.Ped.Actions[v] then
+								ESX.ShowHelpNotification('Press ~INPUT_CONTEXT~ to interact with ped')
+								if IsControlJustPressed(0, 51) then
+									Entity.Ped.Actions[v]()
+								end
+							end
+						end
+					end
+				end
+			end
+			for k,v in pairs(Positions) do
+				for _,v2 in ipairs(v) do
+					local player_coords = GetEntityCoords(PlayerPedId())
+					local dist = #(player_coords - v2.coords)
+					if dist <= 10.0 then
+						interval = 1
+						if dist <= 4.0 then
+							ESX.ShowHelpNotification('Press ~INPUT_CONTEXT~ to interact')
+							if IsControlJustPressed(0, 51) then
+								v2.action()
+							end
+						end
+					end
+				end
+			end
+
+			Wait(interval)
+		end
+		return
+	end)
 end
 
 function itemProgress(data)
 	if data.craftable then
-		if not data.ret then bartext = Loc[Config.Lan].info["smelting"]..QBCore.Shared.Items[data.item].label
-		else bartext = Loc[Config.Lan].info["cutting"]..QBCore.Shared.Items[data.item].label end
+		if not data.ret then 
+			bartext = Loc[Config.Lan].info["smelting"]--[[..QBCore.Shared.Items[data.item].label]]
+		else 
+			bartext = Loc[Config.Lan].info["cutting"] 
+		end
 	end
 	-- LocalPlayer.state:set("inv_busy", true, true) TriggerEvent('inventory:client:busy:status', true) TriggerEvent('canUseInventoryAndHotbar:toggle', false)
 	local isDrilling = true
@@ -110,10 +151,10 @@ function itemProgress(data)
 		local scene
 		local dict = "anim@amb@machinery@speed_drill@"
 		local anim = "operate_02_hi_amy_skater_01"
-		loadAnimDict(tostring(dict))
-		for _, v in pairs(Props) do
+		Anim.LoadDict(dict)
+		for _, v in pairs(Entity.Prop.List) do
 			if #(GetEntityCoords(v) - GetEntityCoords(PlayerPedId())) <= 2.0 and GetEntityModel(v) == `gr_prop_gr_speeddrill_01c` then
-				loadDrillSound()
+				Sound.Load()
 				PlaySoundFromEntity(soundId, "Drill", v, "DLC_HEIST_FLEECA_SOUNDSET", 0.5, 0)
 				drillcoords = GetOffsetFromEntityInWorldCoords(v, 0.0, -0.15, 0.0)
 				scene = NetworkCreateSynchronisedScene(GetEntityCoords(v), GetEntityRotation(v), 2, false, false, 1065353216, 0, 1.3)
@@ -123,7 +164,7 @@ function itemProgress(data)
 			end
 		end
 		CreateThread(function()
-			loadPtfxDict("core")
+			PTFX.LoadAsset("core")
 			while isDrilling do
 				UseParticleFxAssetNextCall("core")
 				local dust = StartNetworkedParticleFxNonLoopedAtCoord("glass_side_window", drillcoords.x, drillcoords.y, drillcoords.z+1.1, 0.0, 0.0, GetEntityHeading(PlayerPedId())+math.random(0, 359), 0.2, 0.0, 0.0, 0.0)
@@ -134,51 +175,49 @@ function itemProgress(data)
 		animDictNow = "amb@prop_human_parking_meter@male@idle_a"
 		animNow = "idle_a"
 	end
-	QBCore.Functions.Progressbar('making_food', bartext, Config.Timings["Crafting"], false, true, { disableMovement = true, disableCarMovement = true, disableMouse = false, disableCombat = true, },
-	{ animDict = animDictNow, anim = animNow, flags = 8, }, {}, {}, function()
-		TriggerServerEvent('jim-mining:GetItem', data)
-		if data.ret then
-			if math.random(1,10) >= 8 then
-				local breakId = GetSoundId()
-				PlaySoundFromEntity(breakId, "Drill_Pin_Break", PlayerPedId(), "DLC_HEIST_FLEECA_SOUNDSET", 1, 0)
-				toggleItem(false, "drillbit", 1)
+
+	exports['rprogress']:Custom({
+		Label = bartext, 
+		Duration = Config.Timings["Crafting"],
+		onComplete = function(cancelled)
+			if not cancelled then
+				if data.ret then
+					if math.random(1,10) >= 8 then
+						local breakId = GetSoundId()
+						PlaySoundFromEntity(breakId, "Drill_Pin_Break", PlayerPedId(), "DLC_HEIST_FLEECA_SOUNDSET", 1, 0)
+						-- toggleItem(false, "drillbit", 1) -- REPLACE BY WORKING FUNCTION
+					end
+				end
+				Sound.Unload()
+				StopSound(soundId)
+				PTFX.LoadAsset("core")
+				isDrilling = false
+				NetworkStopSynchronisedScene(scene)
+			else
+				triggerNotify(nil, Loc[Config.Lan].error["cancelled"], 'error')
+				StopAnimTask(PlayerPedId(), animDictNow, animNow, 1.0)
+				Sound.Unload()
+				StopSound(soundId)
+				PTFX.LoadAsset("core")
+				Anim.LoadDict(dict)
+				isDrilling = false
+				NetworkStopSynchronisedScene(scene)
 			end
 		end
-		LocalPlayer.state:set("inv_busy", false, true) TriggerEvent('inventory:client:busy:status', false) TriggerEvent('canUseInventoryAndHotbar:toggle', true)
-		unloadDrillSound()
-		StopSound(soundId)
-		unloadPtfxDict("core")
-		isDrilling = false
-		NetworkStopSynchronisedScene(scene)
-	end, function() -- Cancel
-		triggerNotify(nil, Loc[Config.Lan].error["cancelled"], 'error')
-		StopAnimTask(PlayerPedId(), animDictNow, animNow, 1.0)
-		LocalPlayer.state:set("inv_busy", false, true) TriggerEvent('inventory:client:busy:status', false) TriggerEvent('canUseInventoryAndHotbar:toggle', true)
-		unloadDrillSound()
-		StopSound(soundId)
-		unloadPtfxDict("core")
-		unloadAnimDict(dict)
-		isDrilling = false
-		NetworkStopSynchronisedScene(scene)
-	end, data.item)
+	})
 end
 
-function stoneBreak(name, stone)
+function StoneBreak(stone)
 	local rockcoords = GetEntityCoords(stone)
-	if Config.Debug then print("^5Debug^7: ^2Hiding prop and target^7: '^6"..name.."^7' ^2at coords^7: ^6"..rockcoords) end
 	--Stone CoolDown + Recreation
 	SetEntityAlpha(stone, 0)
+	Entity.Prop.List[stone] = false
+	SetTimeout(Config.Timings["OreRespawn"], function()
+		SetEntityAlpha(stone, 255)
+		Entity.Prop.List[stone] = true
+	end)
 	--CreateModelHide(rockcoords, 1.0, `cs_x_rubweec`, true)
-	exports['qb-target']:RemoveZone(name) Targets[name] = nil
-	Wait(Config.Timings["OreRespawn"])
 	--Unhide Stone and create a new target location
-	SetEntityAlpha(stone, 255)
+	-- SetEntityAlpha(stone, 255)
 	--RemoveModelHide(rockcoords, 1.0, `cs_x_rubweec`, true)
-	Targets[name] =
-		exports['qb-target']:AddCircleZone(name, vector3(rockcoords.x, rockcoords.y, rockcoords.z), 1.2, { name=name, debugPoly=Config.Debug, useZ=true, },
-		{ options = {
-			{ event = "jim-mining:MineOre:Pick", icon = "fas fa-hammer", item = "pickaxe", label = Loc[Config.Lan].info["mine_ore"].." ("..QBCore.Shared.Items["pickaxe"].label..")", job = Config.Job, name = name, stone = stone },
-			{ event = "jim-mining:MineOre:Drill", icon = "fas fa-screwdriver", item = "miningdrill", label = Loc[Config.Lan].info["mine_ore"].." ("..QBCore.Shared.Items["miningdrill"].label..")", job = Config.Job, name = name, stone = stone },
-			{ event = "jim-mining:MineOre:Laser", icon = "fas fa-screwdriver-wrench", item = "mininglaser", label = Loc[Config.Lan].info["mine_ore"].." ("..QBCore.Shared.Items["mininglaser"].label..")", job = Config.Job, name = name, stone = stone },
-			}, distance = 1.3 })
 end

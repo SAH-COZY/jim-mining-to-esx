@@ -1,6 +1,7 @@
 Model = {}
 
 function Model.Load(model)
+    print('in model load: '..model)
     if type(model) == 'string' then model = GetHashKey(model) end
     if IsModelInCdimage(model) then
         local prev_inf_timeout = 5000

@@ -2,7 +2,8 @@ Blip = {}
 Blip.List = {}
 
 function Blip.Create(data)
-    local blip = AddBlipForCoord(data.coords)
+	print("BLIP.CREATE:  "..json.encode(data))
+    blip = AddBlipForCoord(data.coords)
 	SetBlipAsShortRange(blip, true)
 	SetBlipSprite(blip, data.sprite or 1)
 	SetBlipColour(blip, data.col or 0)
@@ -11,17 +12,15 @@ function Blip.Create(data)
 	BeginTextCommandSetBlipName('STRING')
 	AddTextComponentString(tostring(data.name))
 	EndTextCommandSetBlipName(blip)
-    data.handle = blip
-    table.insert(Blip.List, data)
+    Blip.List[blip] = true
 	return blip
 end
 
 function Blip.Remove(id)
 	RemoveBlip(id)
-	for i,v in ipairs(Blip.List) do 
-		if v == id then 
-			table.remove(Blip.List, i) return true 
-		end
+	if Blip.List[id] then
+		Blip.List[id] = nil
+		return true
 	end
 	return false
 end
