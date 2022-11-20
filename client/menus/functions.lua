@@ -17,7 +17,7 @@ function Menu.OpenStoreMenu()
 
         RageUI.IsVisible(main, function()
             for i,v in ipairs(list.items) do
-                RageUI.Button(list.items[i].name, nil, {RightLabel = '~g~'..tostring(list.items[i].price)..'$~s~ →'}, true, {
+                RageUI.Button(ItemsLabel[list.items[i].name], nil, {RightLabel = '~g~'..tostring(list.items[i].price)..'$~s~ →'}, true, {
                     onSelected = function()
                         
                     end
@@ -37,6 +37,11 @@ function Menu.OpenCraftMenu()
     local main = RageUI.CreateMenu("", "CRAFT MENU")
 
     local main_list = {
+        ['smeltore'] = {
+            label = 'Smelt Ore', -- TODO
+            menu = RageUI.CreateSubMenu(main, "", "SMELT ORE"),
+            list = Crafting.SmeltMenu
+        },
         ['gem_cut'] = {
             label = 'Gem Cut',
             menu = RageUI.CreateSubMenu(main, "", "GEM CUT"),
@@ -88,7 +93,7 @@ function Menu.OpenCraftMenu()
                 for i,v2 in ipairs(v.list) do
                     for k3,v3 in pairs(v2) do
                         if k3 ~= "amount" then
-                            RageUI.Button(k3, nil, {RightLabel = "Craft →"}, true, {
+                            RageUI.Button(ItemsLabel[k3], nil, {RightLabel = "Craft →"}, true, {
                                 onSelected = function()
                                     print(json.encode(v2))
                                     TriggerServerEvent('jim-mining:MakeItem', v2) -- REMAKE ACTION OF MAKEITEM AND ADAPT ARGUMENTS TO SEND LESS ARGS AS POSSIBLE
@@ -126,11 +131,11 @@ function Menu.OpenSellOreMenu()
         end
         RageUI.IsVisible(main, function()
             for i = 1, #list do
-                RageUI.Button(list[i], nil, {RightLabel = '~g~'..Config.SellItems[list[i]]..'$ →'}, true, {
+                RageUI.Button(ItemsLabel[list[i]], nil, {RightLabel = '~g~'..Config.SellItems[list[i]]..'$ →'}, true, {
                     onSelected = function()
-                        TriggerEvent('jim-mining:SellAnim', list[i])
+                        TriggerEvent('jim-mining:SellAnim', {item = list[i]})
                     end
-                }) -- CHECK ALL OF THAT IF ITS GOOD
+                })
             end
         end, function() end)
 
@@ -157,8 +162,8 @@ function Menu.OpenSellJewelMenu()
         end
         RageUI.IsVisible(main, function()
             for k,v in pairs(list) do
-                if Config.SellItems[v] then
-                    RageUI.Button(v, nil, {RightLabel = '~g~'..Config.SellItems[v]..'$~s~ →'}, true, {
+                if Config.SellItems[v] then -- avoid errors
+                    RageUI.Button(ItemsLabel[v], nil, {RightLabel = '~g~'..Config.SellItems[v]..'$~s~ →'}, true, {
                         onSelected = function()
                             TriggerServerEvent('jim-mining:JewelSell:Sub', v) -- CHECK ALL OF THAT IF ITS GOOD
                         end
@@ -236,7 +241,7 @@ function Menu.OpenSellVangelicoMenu()
         for k,v in pairs(main_list) do
             RageUI.IsVisible(v.menu, function()
                 for i,v2 in ipairs(v.list) do
-                    RageUI.Button(v2, nil, {RightLabel = 'Sell →'}, true, {
+                    RageUI.Button(ItemsLabel[v2], nil, {RightLabel = 'Sell →'}, true, {
                         onSelected = function()
                             
                         end

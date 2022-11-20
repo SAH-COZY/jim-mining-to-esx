@@ -8,6 +8,10 @@ author "Jimathy"
 version "ESX v1.0"
 description "Mining Script By Jimathy"
 
+shared_scripts {
+    'shared/*.lua'
+}
+
 client_scripts {
     '@RageUI/RMenu.lua',
     '@RageUI/menu/RageUI.lua',
@@ -37,15 +41,12 @@ client_scripts {
     '@RageUI/menu/panels/UIStatisticsPanel.lua',
     '@RageUI/menu/windows/UIHeritage.lua',
 
+    'locales/*.lua',
     'utils/*.lua',
     'client/menus/*.lua',
     'client/**/*.lua'
 }
 
 server_scripts {
-    
-}
-
-shared_scripts {
-    'shared/*.lua'
+    'server/**/*.lua'
 }

@@ -20,8 +20,8 @@ function triggerNotify(title, message, _type, src)
 		if not src then	exports['okokNotify']:Alert(title, message, 6000, _type)
 		else TriggerClientEvent('okokNotify:Alert', src, title, message, 6000, _type) end
 	elseif Config.Notify == "esx" then
-		if not src then	TriggerEvent("esx:showNotification", message)
-		else TriggerClientEvent("esx:showNotification", src, message) end
+		if not src then	TriggerEvent("esx:showNotification", _type, title, message)
+		else TriggerClientEvent("esx:showNotification", src, _type, title, message) end
 	elseif Config.Notify == "t" then
 		if not src then exports['t-notify']:Custom({title = title, style = _type, message = message, sound = true})
 		else TriggerClientEvent('t-notify:client:Custom', src, { style = _type, duration = 6000, title = title, message = message, sound = true, custom = true}) end

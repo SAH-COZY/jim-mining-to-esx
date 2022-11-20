@@ -32,27 +32,43 @@ function Entity.FaceToEntity(entity)
     end
 end
 
+function Entity.IsVisible(entity_handle)
+    return (GetEntityAlpha(entity_handle)>0)
+end
+
 function Entity.Prop.Create(data, freeze, synced)
     Model.Load(data.prop)
-    local entity_handle = CreateObject(data.prop, data.coords.x, data.coords.y, data.coords.z-1.03, synced or false, synced or false, 0)
-    SetEntityHeading(entity_handle, data.coords.w+180.0)
-    FreezeEntityPosition(entity_handle, freeze or 0)
-    Entity.Prop.List[entity_handle] = true
-    return entity_handle
+    if not DoesObjectOfTypeExistAtCoords(data.coords.x, data.coords.y, data.coords.z, 1.0, data.prop, 0) then
+        local entity_handle = CreateObject(data.prop, data.coords.x, data.coords.y, data.coords.z-1.03, synced or false, synced or false, 0)
+        SetEntityHeading(entity_handle, data.coords.w+180.0)
+        FreezeEntityPosition(entity_handle, freeze or 0)
+        Entity.Prop.List[entity_handle] = true
+        return entity_handle
+    else
+        Entity.Error("There's already an object with this model at these coords, adding it to data table...")
+        local _model = data.prop
+        Entity.Error("Prop already exist, trying to get handle...")
+        if type(_model) == 'string' then _model = GetHashKey(_model) end
+        local closestObj, dist = ESX.Game.GetClosestObject(data.coords, {
+            [_model] = true
+        })
+        Entity.Error('Checking result: Handle = '..tostring(closestObj).." Distance = "..tostring(dist))
+        if closestObj ~= -1 and dist <= 1.5 then
+            Entity.Prop.List[closestObj] = true
+        end
+    end
 end
 
 function Entity.Prop.Delete(entity_handle)
     if Entity.Exist(entity_handle) then
-        SetEntityAsMissionEntity(entity) 
-        Wait(5)
-        DetachEntity(entity, true, true) 
-        Wait(5)
-        DeleteObject(entity)
+        SetEntityAsNoLongerNeeded(entity_handle) 
+        DetachEntity(entity_handle, true, true) 
+        DeleteObject(entity_handle)
+        Entity.Prop.List[entity_handle] = nil
     end
 end
 
 function Entity.Ped.Create(model, coords, freeze, collision, scenario, anim, action)
-    print('Ped load model: '..model)
     Model.Load(model)
     local ped = CreatePed(0, model, coords.x, coords.y, coords.z-1.03, coords.w, false, false)
     SetEntityInvincible(ped, true)
@@ -69,6 +85,20 @@ function Entity.Ped.Create(model, coords, freeze, collision, scenario, anim, act
         Entity.Ped.Actions[ped] = action
     end
 	return ped
+end
+
+function Entity.FadeOut(entity)
+    for i = 255, 0, -1 do
+        SetEntityAlpha(entity, i, true)
+        Wait(10)
+    end
+end
+
+function Entity.FadeIn(entity)
+    for i = 0, 255, 1 do
+        SetEntityAlpha(entity, i, true)
+        Wait(10)
+    end
 end
 
 function Entity.Error(msg)

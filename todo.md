@@ -1,3 +1,3 @@
 - ADD RAGEUI BANNER FOR EVERY MENUS
 
-# /!\ - GUETTER LE MENU DES STORE ET LE FAIRE /!\
+- Avoid that multiple persons use jewel cutter and stone cracker at the same time.
