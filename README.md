@@ -1,4 +1,4 @@
-# jim-mining-to-esx-sahcozy
+# jim-mining-to-esx
 
 originally made for QB
 
